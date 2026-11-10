@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase/service";
+import { createClient } from "@/lib/supabase/server";
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
@@ -9,10 +9,10 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: false, error: "Missing tracking number" }, { status: 400 });
   }
 
-  const admin = createServiceClient();
+  const supabase = await createClient();
 
   // 1. Search for the shipment in Supabase by internal reference or courier tracking number
-  const { data: shipment, error: shipmentError } = await admin
+  const { data: shipment, error: shipmentError } = await supabase
     .from("shipments")
     .select(`
       id,
@@ -33,7 +33,7 @@ export async function GET(req: Request) {
   }
 
   // 2. Fetch tracking/timeline events for this shipment
-  const { data: events } = await admin
+  const { data: events } = await supabase
     .from("shipment_events")
     .select("status, remarks, created_at")
     .eq("shipment_id", shipment.id)
